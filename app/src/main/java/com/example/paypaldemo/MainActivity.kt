@@ -5,16 +5,29 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.paypal.android.corepayments.CoreConfig
+import com.paypal.android.corepayments.Environment
+import com.paypal.android.paypalnativepayments.PayPalNativeCheckoutClient
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var coreConfig: CoreConfig
+    private lateinit var payPalNativeClient: PayPalNativeCheckoutClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+        coreConfig = CoreConfig(
+            clientId = "AdbEgpEPd-S4Np4w4jgpGo_ZWUwrtzAxtlIBPBQKhiTtI1CrER-OFhDASjkGe_DAedeLMAme9I_fFwBA",
+            environment = Environment.SANDBOX
+        )
+
+        payPalNativeClient = PayPalNativeCheckoutClient(
+            application = this.application,
+            coreConfig = coreConfig,
+            returnUrl = "com.example.paypaldemo://paypalpay"
+        )
+
+
     }
 }
