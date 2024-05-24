@@ -1,10 +1,26 @@
 package com.example.paypaldemo
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.paypal.android.corepayments.CoreConfig
 import com.paypal.android.corepayments.Environment
+import com.paypal.android.corepayments.PayPalSDKError
+import com.paypal.android.paymentbuttons.PayPalButton
 import com.paypal.android.paypalnativepayments.PayPalNativeCheckoutClient
+import com.paypal.android.paypalnativepayments.PayPalNativeCheckoutListener
+import com.paypal.android.paypalnativepayments.PayPalNativeCheckoutRequest
+import com.paypal.android.paypalnativepayments.PayPalNativeCheckoutResult
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Credentials
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import okio.IOException
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
@@ -14,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         coreConfig = CoreConfig(
             clientId = "AdbEgpEPd-S4Np4w4jgpGo_ZWUwrtzAxtlIBPBQKhiTtI1CrER-OFhDASjkGe_DAedeLMAme9I_fFwBA",
             environment = Environment.SANDBOX
@@ -25,6 +42,95 @@ class MainActivity : AppCompatActivity() {
             returnUrl = "com.example.paypaldemo://paypalpay"
         )
 
+        payPalNativeClient.listener = object : PayPalNativeCheckoutListener {
+            override fun onPayPalCheckoutStart() {
+                Log.i("PAYPAL", "PayPal checkout started")
+            }
 
+            override fun onPayPalCheckoutSuccess(result: PayPalNativeCheckoutResult) {
+                Log.i("PAYPAL", "PayPal checkout success: $result")
+                getAccessToken { accessToken ->
+                    if (accessToken != null) {
+                        result.orderId?.let { captureOrder(it, accessToken) }
+                    } else {
+                        Log.i("PAYPAL", "Failed to obtain access token")
+                    }
+                }
+            }
+
+            override fun onPayPalCheckoutFailure(error: PayPalSDKError) {
+                Log.i("PAYPAL", "PayPal checkout error: $error")
+            }
+
+            override fun onPayPalCheckoutCanceled() {
+                Log.i("PAYPAL", "PayPal checkout canceled")
+            }
+        }
+
+        val payPalButton: PayPalButton = findViewById(R.id.paypal_button)
+        payPalButton.setOnClickListener {
+            startPayPalCheckout()
+        }
+    }
+
+    private fun startPayPalCheckout() {
+        val request = PayPalNativeCheckoutRequest("70P828664E501490P")
+        payPalNativeClient.startCheckout(request)
+    }
+
+    private fun getAccessToken(callback: (String?) -> Unit) {
+        val clientId = "AdbEgpEPd-S4Np4w4jgpGo_ZWUwrtzAxtlIBPBQKhiTtI1CrER-OFhDASjkGe_DAedeLMAme9I_fFwBA"
+        val secret = "EORUvftMgIfuRQx5BmrGFP0lRYOsdengTR0sEV4cKXRYhDN5HJzSh9g0x_WZtc89IGtiGc_PvhqngLh_"
+        val auth = Credentials.basic(clientId, secret)
+
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url("https://api-m.sandbox.paypal.com/v1/oauth2/token")
+            .post("grant_type=client_credentials".toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull()))
+            .addHeader("Authorization", auth)
+            .addHeader("Content-Type", "application/x-www-form-urlencoded")
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                e.printStackTrace()
+                callback(null)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    val json = responseBody?.let { JSONObject(it) }
+                    val accessToken = json?.getString("access_token")
+                    callback(accessToken)
+                } else {
+                    callback(null)
+                }
+            }
+        })
+    }
+
+    private fun captureOrder(orderId: String, accessToken: String) {
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url("https://api-m.sandbox.paypal.com/v2/checkout/orders/$orderId/capture")
+            .post("".toRequestBody(null))
+            .addHeader("Authorization", "Bearer $accessToken")
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                e.printStackTrace()
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    Log.i("PAYPAL", "Order captured successfully")
+                } else {
+                    Log.i("PAYPAL", "Failed to capture order: ${response.message}")
+                }
+            }
+        })
     }
 }

@@ -46,4 +46,21 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     implementation("com.paypal.android:paypal-native-payments:1.4.0")
+
+    implementation("com.paypal.android:payment-buttons:1.4.0")
+
+    // Retrofit
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // Coroutines
+    implementation ("com.google.code.gson:gson:2.8.9")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.2")
+
+
+    //okhttp
+    implementation ("com.squareup.okhttp3:okhttp:5.0.0-alpha.6")
+    implementation ("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.6")
+
 }
