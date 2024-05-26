@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">PayPalDemo</string>
+    <string name="paypal_checkout_user_agreement_cta_pay_now">Pay Now</string>
+    <string name="paypal_overcapture_expanded_details_long_text">Default</string>
+    <string name="order_completed">Order Completed</string>
+    <string name="yeezus">yeezus</string>
+    <string name="_10">$10</string>
+
 </resources>

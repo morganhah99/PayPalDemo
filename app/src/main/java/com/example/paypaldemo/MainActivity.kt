@@ -2,7 +2,9 @@ package com.example.paypaldemo
 
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.example.paypaldemo.databinding.ActivityMainBinding
 import com.paypal.android.corepayments.CoreConfig
 import com.paypal.android.corepayments.Environment
 import com.paypal.android.corepayments.PayPalSDKError
@@ -26,10 +28,16 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var coreConfig: CoreConfig
     private lateinit var payPalNativeClient: PayPalNativeCheckoutClient
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val successMessage = binding.tvSuccessMessage
+        val productImage = binding.ivProductImage
+        val productPrice = binding.tvProductPrice
 
         coreConfig = CoreConfig(
             clientId = "AdbEgpEPd-S4Np4w4jgpGo_ZWUwrtzAxtlIBPBQKhiTtI1CrER-OFhDASjkGe_DAedeLMAme9I_fFwBA",
@@ -52,6 +60,11 @@ class MainActivity : AppCompatActivity() {
                 getAccessToken { accessToken ->
                     if (accessToken != null) {
                         result.orderId?.let { captureOrder(it, accessToken) }
+                        runOnUiThread{
+                            successMessage.visibility = View.VISIBLE
+                            productImage.visibility = View.GONE
+                            productPrice.visibility = View.GONE
+                        }
                     } else {
                         Log.i("PAYPAL", "Failed to obtain access token")
                     }
