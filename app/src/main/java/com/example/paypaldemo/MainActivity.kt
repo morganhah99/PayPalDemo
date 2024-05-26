@@ -74,14 +74,67 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startPayPalCheckout() {
-        val request = PayPalNativeCheckoutRequest("70P828664E501490P")
-        payPalNativeClient.startCheckout(request)
+        getOrderId { orderid ->
+            val request = orderid?.let { PayPalNativeCheckoutRequest(it) }
+            if (request != null) {
+                payPalNativeClient.startCheckout(request)
+            }
+        }
+    }
+
+    private fun getOrderId(callback: (String?) -> Unit) {
+        val client = OkHttpClient()
+        getAccessToken { accessToken ->
+            accessToken?.let { token ->
+                val authHeader = "Bearer $token"
+                val requestBody = """
+                    {
+                        "intent": "CAPTURE",
+                        "purchase_units": [{
+                            "amount": {
+                                "currency_code": "USD",
+                                "value": "10.00"
+                            }
+                        }]
+                    }
+                """.trimIndent().toRequestBody("application/json".toMediaTypeOrNull())
+
+                val request = Request.Builder()
+                    .url("https://api-m.sandbox.paypal.com/v2/checkout/orders")
+                    .post(requestBody)
+                    .addHeader("Authorization", authHeader)
+                    .addHeader("Content-Type", "application/json")
+                    .build()
+
+                client.newCall(request).enqueue(object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        Log.i("PAYPAL", "Failure: ${e.message}")
+                        callback(null)
+                    }
+
+                    override fun onResponse(call: Call, response: Response) {
+                        if (response.isSuccessful) {
+                            response.body?.string()?.let { responseBody ->
+                                val jsonObject = JSONObject(responseBody)
+                                val orderId = jsonObject.getString("id")
+                                callback(orderId)
+                            }
+                        } else {
+                            Log.i("PAYPAL", "Error: ${response.body?.string()}")
+                            callback(null)
+                        }
+                    }
+                })
+            } ?: run {
+                Log.i("PAYPAL", "Access token is null")
+                callback(null)
+            }
+        }
     }
 
     private fun getAccessToken(callback: (String?) -> Unit) {
-        val clientId = "AdbEgpEPd-S4Np4w4jgpGo_ZWUwrtzAxtlIBPBQKhiTtI1CrER-OFhDASjkGe_DAedeLMAme9I_fFwBA"
         val secret = "EORUvftMgIfuRQx5BmrGFP0lRYOsdengTR0sEV4cKXRYhDN5HJzSh9g0x_WZtc89IGtiGc_PvhqngLh_"
-        val auth = Credentials.basic(clientId, secret)
+        val auth = Credentials.basic(coreConfig.clientId, secret)
 
         val client = OkHttpClient()
         val request = Request.Builder()
