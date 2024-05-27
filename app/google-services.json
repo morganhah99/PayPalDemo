@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "405711737160",
+    "project_id": "fir-f0f22",
+    "storage_bucket": "fir-f0f22.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:405711737160:android:48138f147d0105343e637d",
+        "android_client_info": {
+          "package_name": "com.example.paypaldemo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzheKCRaBLF3tdCYX6NolWPyd4iHhuCXA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

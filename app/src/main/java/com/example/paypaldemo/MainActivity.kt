@@ -6,6 +6,9 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.paypaldemo.databinding.ActivityMainBinding
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import com.paypal.android.corepayments.CoreConfig
 import com.paypal.android.corepayments.Environment
 import com.paypal.android.corepayments.PayPalSDKError
@@ -30,10 +33,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var coreConfig: CoreConfig
     private lateinit var payPalNativeClient: PayPalNativeCheckoutClient
     private lateinit var binding: ActivityMainBinding
+    private lateinit var analytics: FirebaseAnalytics
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
+        analytics = Firebase.analytics
         setContentView(binding.root)
 
         val successMessage = binding.tvSuccessMessage
@@ -58,15 +63,14 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPayPalCheckoutSuccess(result: PayPalNativeCheckoutResult) {
                 Log.i("PAYPAL", "PayPal checkout success: $result")
+                analytics.logEvent("paypal_checkout_finish", null)
+                successMessage.visibility = View.VISIBLE
+                productImage.visibility = View.GONE
+                productPrice.visibility = View.GONE
                 lifecycleScope.launch {
                     val accessToken = getAccessToken()
                     if (accessToken != null) {
                         result.orderId?.let { captureOrder(it, accessToken) }
-                        runOnUiThread {
-                            successMessage.visibility = View.VISIBLE
-                            productImage.visibility = View.GONE
-                            productPrice.visibility = View.GONE
-                        }
                     } else {
                         Log.i("PAYPAL", "Failed to obtain access token")
                     }
@@ -79,6 +83,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPayPalCheckoutCanceled() {
                 Log.i("PAYPAL", "PayPal checkout canceled")
+                analytics.logEvent("paypal_checkout_cancelled", null)
             }
         }
 
@@ -97,6 +102,7 @@ class MainActivity : AppCompatActivity() {
         if (request != null) {
             payPalNativeClient.startCheckout(request)
         }
+        analytics.logEvent("paypal_checkout_start", null)
     }
 
     private suspend fun getOrderId(): String? = withContext(Dispatchers.IO) {
