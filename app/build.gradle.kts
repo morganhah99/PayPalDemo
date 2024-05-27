@@ -52,10 +52,6 @@ dependencies {
 
     implementation("com.paypal.android:payment-buttons:1.4.0")
 
-    // Retrofit
-    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
-
     // Coroutines
     implementation ("com.google.code.gson:gson:2.8.9")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.2")

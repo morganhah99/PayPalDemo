@@ -80,7 +80,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val payPalButton: PayPalButton = findViewById(R.id.paypal_button)
+        val payPalButton: PayPalButton = binding.paypalButton
+
         payPalButton.setOnClickListener {
             startPayPalCheckout()
         }
