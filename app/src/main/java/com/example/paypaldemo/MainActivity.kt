@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
         val successMessage = binding.tvSuccessMessage
         val productImage = binding.ivProductImage
         val productPrice = binding.tvProductPrice
+        val paypalButton = binding.paypalButton
 
         coreConfig = CoreConfig(
             clientId = "AdbEgpEPd-S4Np4w4jgpGo_ZWUwrtzAxtlIBPBQKhiTtI1CrER-OFhDASjkGe_DAedeLMAme9I_fFwBA",
@@ -66,7 +67,9 @@ class MainActivity : AppCompatActivity() {
                 analytics.logEvent("paypal_checkout_finish", null)
                 successMessage.visibility = View.VISIBLE
                 productImage.visibility = View.GONE
+                paypalButton.visibility = View.GONE
                 productPrice.visibility = View.GONE
+
                 lifecycleScope.launch {
                     val accessToken = getAccessToken()
                     if (accessToken != null) {
@@ -115,7 +118,7 @@ class MainActivity : AppCompatActivity() {
                 "intent": "CAPTURE",
                 "purchase_units": [{
                     "amount": {
-                        "currency_code": "USD",
+                        "currency_code": "USD", 
                         "value": "10.00"
                     }
                 }]
@@ -146,7 +149,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun getAccessToken(): String? = withContext(Dispatchers.IO) {
-        val secret = "EORUvftMgIfuRQx5BmrGFP0lRYOsdengTR0sEV4cKXRYhDN5HJzSh9g0x_WZtc89IGtiGc_PvhqngLh_"
+        val secret =
+            "EORUvftMgIfuRQx5BmrGFP0lRYOsdengTR0sEV4cKXRYhDN5HJzSh9g0x_WZtc89IGtiGc_PvhqngLh_"
         val auth = Credentials.basic(coreConfig.clientId, secret)
 
         val client = OkHttpClient()
@@ -170,24 +174,25 @@ class MainActivity : AppCompatActivity() {
         return@withContext null
     }
 
-    private suspend fun captureOrder(orderId: String, accessToken: String) = withContext(Dispatchers.IO) {
-        val client = OkHttpClient()
-        val request = Request.Builder()
-            .url("https://api-m.sandbox.paypal.com/v2/checkout/orders/$orderId/capture")
-            .post("".toRequestBody(null))
-            .addHeader("Authorization", "Bearer $accessToken")
-            .addHeader("Content-Type", "application/json")
-            .build()
+    private suspend fun captureOrder(orderId: String, accessToken: String) =
+        withContext(Dispatchers.IO) {
+            val client = OkHttpClient()
+            val request = Request.Builder()
+                .url("https://api-m.sandbox.paypal.com/v2/checkout/orders/$orderId/capture")
+                .post("".toRequestBody(null))
+                .addHeader("Authorization", "Bearer $accessToken")
+                .addHeader("Content-Type", "application/json")
+                .build()
 
-        try {
-            val response = client.newCall(request).execute()
-            if (response.isSuccessful) {
-                Log.i("PAYPAL", "Order captured successfully")
-            } else {
-                Log.i("PAYPAL", "Failed to capture order: ${response.message}")
+            try {
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    Log.i("PAYPAL", "Order captured successfully")
+                } else {
+                    Log.i("PAYPAL", "Failed to capture order: ${response.message}")
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
         }
-    }
 }
